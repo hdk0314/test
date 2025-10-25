@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>공지사항 게시판</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📢 공지사항</h1>
+      <a href="/notices/new" class="btn btn-primary">새 공지사항 작성</a>
+    </header>
+
+    <main>
+      <% if (notices.length === 0) { %>
+        <div class="empty-state">
+          <p>등록된 공지사항이 없습니다.</p>
+          <a href="/notices/new" class="btn btn-primary">첫 공지사항 작성하기</a>
+        </div>
+      <% } else { %>
+        <div class="notice-list">
+          <% notices.forEach(notice => { %>
+            <div class="notice-item <%= notice.is_pinned ? 'pinned' : '' %>">
+              <div class="notice-header">
+                <% if (notice.is_pinned) { %>
+                  <span class="badge badge-pin">📌 고정</span>
+                <% } %>
+                <h2>
+                  <a href="/notices/<%= notice.id %>"><%= notice.title %></a>
+                </h2>
+              </div>
+              <div class="notice-meta">
+                <span class="author">작성자: <%= notice.author %></span>
+                <span class="date"><%= new Date(notice.created_at).toLocaleString('ko-KR') %></span>
+                <span class="views">조회수: <%= notice.views %></span>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 공지사항 게시판</p>
+    </footer>
+  </div>
+</body>
+</html>

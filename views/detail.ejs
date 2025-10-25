@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= notice.title %> - 공지사항</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="/">📢 공지사항</a></h1>
+    </header>
+
+    <main>
+      <div class="notice-detail">
+        <div class="notice-header">
+          <% if (notice.is_pinned) { %>
+            <span class="badge badge-pin">📌 고정</span>
+          <% } %>
+          <h1><%= notice.title %></h1>
+        </div>
+
+        <div class="notice-meta">
+          <span class="author">작성자: <%= notice.author %></span>
+          <span class="date">작성일: <%= new Date(notice.created_at).toLocaleString('ko-KR') %></span>
+          <% if (notice.updated_at !== notice.created_at) { %>
+            <span class="updated">수정일: <%= new Date(notice.updated_at).toLocaleString('ko-KR') %></span>
+          <% } %>
+          <span class="views">조회수: <%= notice.views %></span>
+        </div>
+
+        <div class="notice-content">
+          <%= notice.content %>
+        </div>
+
+        <div class="notice-actions">
+          <a href="/" class="btn btn-secondary">목록으로</a>
+          <a href="/notices/<%= notice.id %>/edit" class="btn btn-primary">수정</a>
+          <form action="/notices/<%= notice.id %>?_method=DELETE" method="POST" style="display: inline;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 공지사항 게시판</p>
+    </footer>
+  </div>
+</body>
+</html>
