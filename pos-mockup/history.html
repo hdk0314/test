@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>판매 내역 · 약국 POS</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .hist-layout {
+    display: grid;
+    grid-template-columns: 1fr 520px;
+    gap: var(--s-5);
+    height: calc(100vh - var(--topbar-h) - 48px);
+  }
+  .hist-left { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 18px 22px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .kpi .ic-wrap {
+    width: 52px; height: 52px; border-radius: 12px;
+    background: var(--color-primary-light); color: var(--color-primary-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .kpi.blue .ic-wrap { background: #DBEAFE; color: #1E40AF; }
+  .kpi.amber .ic-wrap { background: #FEF3C7; color: #92400E; }
+  .kpi.purple .ic-wrap { background: #EDE9FE; color: #5B21B6; }
+  .kpi .label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .kpi .value { font-size: 24px; font-weight: 800; color: var(--text-strong); margin-top: 2px; }
+  .kpi .delta { font-size: 12px; margin-top: 2px; color: var(--color-success); font-weight: 600; }
+
+  /* 간단 차트 (sparkline 느낌) */
+  .chart-card { padding: 20px 24px; }
+  .chart-card .row { margin-bottom: 16px; }
+  .bar-chart {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 6px;
+    height: 160px;
+    align-items: end;
+  }
+  .bar {
+    background: linear-gradient(180deg, var(--color-primary) 0%, #66B39A 100%);
+    border-radius: 6px 6px 0 0;
+    position: relative;
+  }
+  .bar.today { background: linear-gradient(180deg, #2563EB 0%, #60A5FA 100%); }
+  .bar-label {
+    display: grid; grid-template-columns: repeat(14, 1fr);
+    gap: 6px; margin-top: 8px; font-size: 11px; color: var(--text-muted);
+    text-align: center;
+  }
+
+  .hist-table-wrap {
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .hist-scroll { flex: 1; overflow-y: auto; }
+
+  /* 우측 상세 */
+  .detail-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    display: flex; flex-direction: column;
+    height: 100%;
+  }
+  .detail-head {
+    padding: 22px 24px;
+    background: linear-gradient(135deg, #2E7D66 0%, #1F5A4A 100%);
+    color: #fff;
+  }
+  .detail-head .no { font-size: 13px; opacity: .85; }
+  .detail-head .amt { font-size: 40px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .detail-head .meta { font-size: 13px; opacity: .85; margin-top: 6px; }
+
+  .detail-meta {
+    padding: 18px 24px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .detail-meta .k { font-size: 12px; color: var(--text-muted); }
+  .detail-meta .v { font-weight: 700; color: var(--text-strong); margin-top: 2px; }
+
+  .detail-items { flex: 1; overflow-y: auto; }
+  .detail-item {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--divider);
+    display: grid; grid-template-columns: 1fr auto auto;
+    gap: 12px; align-items: center;
+    font-size: 14px;
+  }
+  .detail-item .q { color: var(--text-muted); }
+  .detail-item .p { font-weight: 700; }
+
+  .detail-actions {
+    padding: 16px 24px;
+    border-top: 1px solid var(--divider);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .detail-actions .full { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar__logo">💊</div>
+    <a class="sidebar__item" href="sale.html"><span class="ic">🧾</span><span>판매</span></a>
+    <a class="sidebar__item" href="prescription.html"><span class="ic">📋</span><span>처방</span></a>
+    <a class="sidebar__item" href="inventory.html"><span class="ic">📦</span><span>재고</span></a>
+    <a class="sidebar__item sidebar__item--active"><span class="ic">📊</span><span>내역</span></a>
+    <a class="sidebar__item"><span class="ic">👥</span><span>고객</span></a>
+    <div class="sidebar__bottom"><a class="sidebar__item"><span class="ic">⚙️</span><span>설정</span></a></div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar__title">판매 내역 / 일마감</div>
+    <span class="chip">2026-04-16 · 오늘</span>
+    <div class="topbar__spacer"></div>
+    <span class="badge-sync">실시간 동기화</span>
+    <button class="btn btn--sm">📅 기간 선택</button>
+    <button class="btn btn--primary btn--sm">🔒 일마감</button>
+    <div class="avatar">김</div>
+  </header>
+
+  <main class="main">
+    <div class="hist-layout">
+
+      <!-- 좌측: KPI + 차트 + 내역표 -->
+      <section class="hist-left">
+
+        <!-- KPI -->
+        <div class="kpi-row">
+          <div class="kpi">
+            <div class="ic-wrap">💰</div>
+            <div>
+              <div class="label">오늘 매출</div>
+              <div class="value num">1,248,500원</div>
+              <div class="delta">▲ 12.4% (전일 대비)</div>
+            </div>
+          </div>
+          <div class="kpi blue">
+            <div class="ic-wrap">🧾</div>
+            <div>
+              <div class="label">판매 건수</div>
+              <div class="value num">37건</div>
+              <div class="delta">▲ 4건</div>
+            </div>
+          </div>
+          <div class="kpi amber">
+            <div class="ic-wrap">📋</div>
+            <div>
+              <div class="label">처방 조제</div>
+              <div class="value num">22건</div>
+              <div class="delta" style="color:var(--text-muted);">전일 동일</div>
+            </div>
+          </div>
+          <div class="kpi purple">
+            <div class="ic-wrap">↩️</div>
+            <div>
+              <div class="label">환불 / 취소</div>
+              <div class="value num">1건</div>
+              <div class="delta" style="color:var(--text-muted);">−18,000원</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 시간대별 매출 -->
+        <div class="card chart-card">
+          <div class="row between mb-4">
+            <div class="card__title">시간대별 매출</div>
+            <div class="row gap-2">
+              <button class="btn btn--sm tab tab--active">오늘</button>
+              <button class="btn btn--sm tab">어제</button>
+              <button class="btn btn--sm tab">7일</button>
+              <button class="btn btn--sm tab">30일</button>
+            </div>
+          </div>
+          <div class="bar-chart">
+            <div class="bar" style="height: 15%"></div>
+            <div class="bar" style="height: 18%"></div>
+            <div class="bar" style="height: 28%"></div>
+            <div class="bar" style="height: 42%"></div>
+            <div class="bar" style="height: 55%"></div>
+            <div class="bar" style="height: 72%"></div>
+            <div class="bar" style="height: 68%"></div>
+            <div class="bar today" style="height: 82%"></div>
+            <div class="bar" style="height: 50%; opacity:.3"></div>
+            <div class="bar" style="height: 48%; opacity:.3"></div>
+            <div class="bar" style="height: 45%; opacity:.3"></div>
+            <div class="bar" style="height: 52%; opacity:.3"></div>
+            <div class="bar" style="height: 38%; opacity:.3"></div>
+            <div class="bar" style="height: 20%; opacity:.3"></div>
+          </div>
+          <div class="bar-label">
+            <span>09시</span><span>10</span><span>11</span><span>12</span>
+            <span>13</span><span>14</span><span>15</span><span>지금</span>
+            <span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span>
+          </div>
+        </div>
+
+        <!-- 판매 내역 -->
+        <div class="hist-table-wrap">
+          <div class="card__header">
+            <div class="card__title">오늘 판매 내역</div>
+            <span class="chip">37건</span>
+            <div class="flex-1"></div>
+            <div class="search" style="min-height: 40px; max-width: 280px;">
+              <span class="ic">🔍</span>
+              <input placeholder="판매번호·고객명·품목명">
+            </div>
+            <button class="btn btn--sm">📄 엑셀</button>
+          </div>
+          <div class="hist-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>판매번호</th>
+                  <th>시각</th>
+                  <th>담당</th>
+                  <th>품목</th>
+                  <th class="text-right">수량</th>
+                  <th class="text-right">금액</th>
+                  <th>결제수단</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background:#F0FDF4;">
+                  <td class="strong">#20260416-037</td>
+                  <td>14:31</td><td>김약사</td>
+                  <td>타이레놀 외 6건</td>
+                  <td class="num">7</td>
+                  <td class="num strong">57,300원</td>
+                  <td>💳 카드</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">결제완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-036</td>
+                  <td>14:18</td><td>박직원</td>
+                  <td>박카스 외 2건</td>
+                  <td class="num">3</td>
+                  <td class="num strong">14,000원</td>
+                  <td>💵 현금</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">결제완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-035</td>
+                  <td>14:02</td><td>김약사</td>
+                  <td>처방조제 (#RX-240)</td>
+                  <td class="num">4</td>
+                  <td class="num strong">8,240원</td>
+                  <td>🏥 보험</td>
+                  <td><span class="chip" style="background:#DBEAFE;color:#1E40AF;">청구대기</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-034</td>
+                  <td>13:48</td><td>박직원</td>
+                  <td>마데카솔 외 1건</td>
+                  <td class="num">2</td>
+                  <td class="num strong">6,300원</td>
+                  <td>📱 간편결제</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">결제완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-033</td>
+                  <td>13:33</td><td>김약사</td>
+                  <td>센트룸 멀티비타민</td>
+                  <td class="num">1</td>
+                  <td class="num strong">28,000원</td>
+                  <td>💳 카드</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">결제완료</span></td>
+                </tr>
+                <tr style="color:var(--color-danger);">
+                  <td class="strong">#20260416-032</td>
+                  <td>13:15</td><td>박직원</td>
+                  <td>(환불) 아로나민 골드</td>
+                  <td class="num">−1</td>
+                  <td class="num strong">−18,000원</td>
+                  <td>💳 카드</td>
+                  <td><span class="chip chip--danger">환불완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-031</td>
+                  <td>12:58</td><td>김약사</td>
+                  <td>처방조제 (#RX-239)</td>
+                  <td class="num">5</td>
+                  <td class="num strong">12,400원</td>
+                  <td>🏥 보험</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">청구완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-030</td>
+                  <td>12:42</td><td>이직원</td>
+                  <td>대일밴드 외 2건</td>
+                  <td class="num">4</td>
+                  <td class="num strong">9,800원</td>
+                  <td>💵 현금</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">결제완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-029</td>
+                  <td>12:21</td><td>김약사</td>
+                  <td>지르텍정 외 1건</td>
+                  <td class="num">2</td>
+                  <td class="num strong">11,800원</td>
+                  <td>💳 카드</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">결제완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-028</td>
+                  <td>11:58</td><td>박직원</td>
+                  <td>쌍화탕 골드 100ml</td>
+                  <td class="num">2</td>
+                  <td class="num strong">24,000원</td>
+                  <td>📱 간편결제</td>
+                  <td><span class="chip" style="background:#DCFCE7;color:#166534;">결제완료</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">#20260416-027</td>
+                  <td>11:42</td><td>김약사</td>
+                  <td>처방조제 (#RX-238)</td>
+                  <td class="num">3</td>
+                  <td class="num strong">6,800원</td>
+                  <td>🏥 보험</td>
+                  <td><span class="chip" style="background:#DBEAFE;color:#1E40AF;">청구대기</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 우측: 선택 판매건 상세 -->
+      <aside class="detail-card">
+        <div class="detail-head">
+          <div class="no">판매 #20260416-037</div>
+          <div class="amt num">57,300원</div>
+          <div class="meta">2026-04-16 14:31 · 처방전 연동</div>
+        </div>
+
+        <div class="detail-meta">
+          <div><div class="k">담당 약사</div><div class="v">김약사</div></div>
+          <div><div class="k">결제수단</div><div class="v">신용카드 (일시불)</div></div>
+          <div><div class="k">고객</div><div class="v">박환자 (34세)</div></div>
+          <div><div class="k">처방전</div><div class="v">#RX-241</div></div>
+          <div><div class="k">소계 / 할인</div><div class="v num">59,300 / −2,000</div></div>
+          <div><div class="k">영수증</div><div class="v">인쇄 + 문자 ✓</div></div>
+        </div>
+
+        <div class="detail-items">
+          <div class="detail-item">
+            <div>
+              <div class="strong">타이레놀 이알 서방정 650mg</div>
+              <div class="text-muted" style="font-size:12px;">24정</div>
+            </div>
+            <div class="q num">×2</div>
+            <div class="p num">15,000원</div>
+          </div>
+          <div class="detail-item">
+            <div>
+              <div class="strong">훼스탈 플러스정</div>
+              <div class="text-muted" style="font-size:12px;">20정 · 처방</div>
+            </div>
+            <div class="q num">×1</div>
+            <div class="p num">5,800원</div>
+          </div>
+          <div class="detail-item">
+            <div>
+              <div class="strong">센트룸 우먼 멀티비타민</div>
+              <div class="text-muted" style="font-size:12px;">100정</div>
+            </div>
+            <div class="q num">×1</div>
+            <div class="p num">28,000원</div>
+          </div>
+          <div class="detail-item">
+            <div>
+              <div class="strong">대일밴드 경제형 (M)</div>
+              <div class="text-muted" style="font-size:12px;">50매</div>
+            </div>
+            <div class="q num">×3</div>
+            <div class="p num">10,500원</div>
+          </div>
+          <div class="detail-item" style="background:var(--surface-alt);">
+            <div class="strong" style="color:var(--color-danger);">할인 적용</div>
+            <div></div>
+            <div class="p num" style="color:var(--color-danger);">−2,000원</div>
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn">🖨 영수증 재발행</button>
+          <button class="btn">📱 문자 재전송</button>
+          <button class="btn btn--danger full">↩️ 환불 처리</button>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+</div>
+</body>
+</html>

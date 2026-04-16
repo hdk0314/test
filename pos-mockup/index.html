@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>약국 POS — 화면 목업 인덱스</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .hero {
+    background: linear-gradient(135deg, #2E7D66 0%, #1F5A4A 100%);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    padding: 40px 48px;
+    margin-bottom: 32px;
+  }
+  .hero h1 { margin: 0 0 12px; font-size: 36px; font-weight: 800; }
+  .hero p  { margin: 0; font-size: 17px; opacity: .9; line-height: 1.6; }
+  .hero .tags { margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .hero .tags span {
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(255,255,255,.15); font-size: 13px; font-weight: 600;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .screen-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: transform .15s ease, box-shadow .15s ease;
+    display: flex; flex-direction: column;
+  }
+  .screen-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .screen-card__thumb {
+    height: 180px;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--divider);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 64px;
+  }
+  .screen-card__body { padding: 20px 24px; flex: 1; }
+  .screen-card__num { font-size: 12px; color: var(--text-subtle); font-weight: 700; letter-spacing: .5px; }
+  .screen-card__title { font-size: 18px; font-weight: 700; margin: 6px 0 8px; color: var(--text-strong); }
+  .screen-card__desc { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+  .screen-card__footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--divider);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .screen-card__footer a { color: var(--color-primary); font-weight: 600; font-size: 14px; }
+
+  .section-title {
+    font-size: 20px; font-weight: 700; color: var(--text-strong);
+    margin: 32px 0 16px;
+  }
+
+  .info-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-bottom: 32px;
+  }
+  .info {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+  }
+  .info__label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .info__value { font-size: 18px; font-weight: 700; color: var(--text-strong); margin-top: 4px; }
+</style>
+</head>
+<body style="padding: 32px 48px;">
+
+  <div class="hero">
+    <h1>약국 POS — UI 디자인 목업</h1>
+    <p>15인치 태블릿(가로 1920×1200) 기준 · 오프라인 우선 · Compose 이식을 위한 디자인 시스템 적용</p>
+    <div class="tags">
+      <span>Jetpack Compose</span>
+      <span>Material3</span>
+      <span>Room + WorkManager</span>
+      <span>Ktor API</span>
+      <span>PostgreSQL</span>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info"><div class="info__label">기준 해상도</div><div class="info__value">1920 × 1200</div></div>
+    <div class="info"><div class="info__label">최소 터치 타겟</div><div class="info__value">56dp</div></div>
+    <div class="info"><div class="info__label">기본 폰트</div><div class="info__value">Pretendard 15pt</div></div>
+    <div class="info"><div class="info__label">주 색상</div><div class="info__value" style="color:#2E7D66;">#2E7D66</div></div>
+  </div>
+
+  <div class="section-title">화면 목록</div>
+  <div class="grid">
+
+    <a href="login.html" class="screen-card">
+      <div class="screen-card__thumb">🔐</div>
+      <div class="screen-card__body">
+        <div class="screen-card__num">SCREEN 01</div>
+        <div class="screen-card__title">로그인</div>
+        <p class="screen-card__desc">약사/직원 계정 로그인 · PIN · 근무자 전환</p>
+      </div>
+      <div class="screen-card__footer"><a>열어보기 →</a></div>
+    </a>
+
+    <a href="sale.html" class="screen-card">
+      <div class="screen-card__thumb" style="background:#E6F4EF;">💊</div>
+      <div class="screen-card__body">
+        <div class="screen-card__num">SCREEN 02 · MAIN</div>
+        <div class="screen-card__title">판매 (메인 POS)</div>
+        <p class="screen-card__desc">상품 검색/카테고리, 장바구니, 할인/보류, 결제 이동</p>
+      </div>
+      <div class="screen-card__footer"><a>열어보기 →</a></div>
+    </a>
+
+    <a href="payment.html" class="screen-card">
+      <div class="screen-card__thumb">💳</div>
+      <div class="screen-card__body">
+        <div class="screen-card__num">SCREEN 03</div>
+        <div class="screen-card__title">결제</div>
+        <p class="screen-card__desc">현금·카드·간편결제·분할결제, 영수증/현금영수증</p>
+      </div>
+      <div class="screen-card__footer"><a>열어보기 →</a></div>
+    </a>
+
+    <a href="prescription.html" class="screen-card">
+      <div class="screen-card__thumb">📋</div>
+      <div class="screen-card__body">
+        <div class="screen-card__num">SCREEN 04</div>
+        <div class="screen-card__title">처방전 입력</div>
+        <p class="screen-card__desc">처방 품목·복약지도·건강보험 청구 연동</p>
+      </div>
+      <div class="screen-card__footer"><a>열어보기 →</a></div>
+    </a>
+
+    <a href="inventory.html" class="screen-card">
+      <div class="screen-card__thumb">📦</div>
+      <div class="screen-card__body">
+        <div class="screen-card__num">SCREEN 05</div>
+        <div class="screen-card__title">재고 관리</div>
+        <p class="screen-card__desc">재고 현황·유효기간·발주·입출고 이력</p>
+      </div>
+      <div class="screen-card__footer"><a>열어보기 →</a></div>
+    </a>
+
+    <a href="history.html" class="screen-card">
+      <div class="screen-card__thumb">📊</div>
+      <div class="screen-card__body">
+        <div class="screen-card__num">SCREEN 06</div>
+        <div class="screen-card__title">판매 내역 / 일마감</div>
+        <p class="screen-card__desc">일자별 매출·결제수단·환불 처리·일마감</p>
+      </div>
+      <div class="screen-card__footer"><a>열어보기 →</a></div>
+    </a>
+
+  </div>
+
+  <div class="section-title">디자인 원칙</div>
+  <div class="card" style="padding: 28px 32px;">
+    <ul style="margin:0; padding-left: 20px; line-height: 2; font-size: 15px; color: var(--text);">
+      <li><b>한 손 터치 기준</b> — 모든 주요 버튼 56dp 이상, 결제/확인은 72~92dp</li>
+      <li><b>판매 화면 3분할</b> — 좌측 네비(88dp) · 중앙 상품검색/그리드 · 우측 장바구니(560dp 고정)</li>
+      <li><b>오프라인 상태 가시화</b> — 상단바에 실시간 동기화 뱃지, 미동기 건수 표기</li>
+      <li><b>숫자는 tabular-nums</b> — 금액/수량 정렬 깨짐 방지</li>
+      <li><b>단축키/바코드 병행</b> — 태블릿이지만 외장 바코드 스캐너·키보드도 지원</li>
+      <li><b>색상 최소화</b> — 약국 그린 1개를 프라이머리, 결제는 블루 액센트만 사용</li>
+    </ul>
+  </div>
+
+</body>
+</html>

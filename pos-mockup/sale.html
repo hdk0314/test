@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>판매 · 약국 POS</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* 판매화면 전용 레이아웃 */
+  .sale-layout {
+    display: grid;
+    grid-template-columns: 1fr var(--rightpanel-w);
+    gap: var(--s-5);
+    height: calc(100vh - var(--topbar-h) - 48px);
+  }
+
+  /* 좌측: 검색 + 카테고리 + 상품그리드 */
+  .sale-left { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+
+  .quick-bar {
+    display: flex; gap: var(--s-3); align-items: center;
+  }
+  .quick-bar .search { flex: 1; }
+  .quick-bar .btn { min-height: 64px; padding: 0 20px; }
+
+  .cat-tabs { overflow-x: auto; padding-bottom: 4px; }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--s-4);
+    overflow-y: auto;
+    padding-right: 4px;
+    flex: 1;
+  }
+  .product {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    cursor: pointer;
+    transition: all .12s ease;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 160px;
+    position: relative;
+  }
+  .product:hover { border-color: var(--color-primary); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .product__type {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 10px; font-weight: 700; letter-spacing: .5px;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .type-otc { background: #E6F4EF; color: #1F5A4A; }
+  .type-rx  { background: #DBEAFE; color: #1E40AF; }
+  .type-hc  { background: #FEF3C7; color: #92400E; }
+
+  .product__icon {
+    font-size: 32px; line-height: 1;
+  }
+  .product__name {
+    font-size: var(--fs-base); font-weight: 700; color: var(--text-strong);
+    line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .product__maker { font-size: var(--fs-xs); color: var(--text-muted); }
+  .product__footer {
+    margin-top: auto;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .product__price { font-size: var(--fs-md); font-weight: 800; color: var(--text-strong); }
+  .product__stock { font-size: 11px; color: var(--text-muted); }
+  .product__stock--low { color: var(--color-warning); font-weight: 700; }
+
+  /* 우측: 장바구니 */
+  .cart {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .cart__header {
+    padding: 18px 22px;
+    background: var(--color-primary-dark);
+    color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cart__title { font-size: var(--fs-md); font-weight: 700; }
+  .cart__meta  { font-size: var(--fs-xs); opacity: .8; margin-top: 2px; }
+  .cart__customer {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.1);
+    padding: 8px 12px; border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .cart__items {
+    flex: 1; overflow-y: auto;
+    padding: 0;
+  }
+  .line {
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--divider);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: start;
+  }
+  .line:hover { background: var(--surface-alt); }
+  .line__name { font-size: var(--fs-base); font-weight: 600; color: var(--text-strong); }
+  .line__meta { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
+
+  .line__qty {
+    display: inline-flex; align-items: center; margin-top: 8px;
+    border: 1px solid var(--border-strong); border-radius: 8px; overflow: hidden;
+  }
+  .line__qty button {
+    width: 36px; height: 36px; background: var(--surface-alt);
+    font-size: 16px; font-weight: 600; color: var(--text-strong);
+  }
+  .line__qty input {
+    width: 48px; height: 36px; border: none; text-align: center; outline: none;
+    font-weight: 700; font-size: 15px;
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  }
+
+  .line__price { text-align: right; font-weight: 700; font-size: var(--fs-md); color: var(--text-strong); }
+  .line__unit  { text-align: right; font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
+  .line__del {
+    color: var(--color-danger); font-size: 18px;
+    width: 32px; height: 32px; margin-top: 4px;
+    border-radius: 8px;
+  }
+  .line__del:hover { background: #FEE2E2; }
+
+  .cart__quick {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    padding: 14px 22px;
+    background: var(--surface-alt);
+    border-top: 1px solid var(--divider);
+  }
+  .cart__quick .btn { min-height: 48px; font-size: var(--fs-sm); padding: 0 8px; }
+
+  .cart__totals {
+    padding: 18px 22px;
+    border-top: 1px solid var(--divider);
+    background: var(--surface);
+  }
+  .total-row {
+    display: flex; justify-content: space-between;
+    font-size: var(--fs-base); margin-bottom: 8px;
+  }
+  .total-row span:first-child { color: var(--text-muted); }
+  .total-row.grand {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px dashed var(--border-strong);
+    font-size: var(--fs-2xl); font-weight: 800; color: var(--text-strong);
+  }
+  .total-row.grand span:first-child { color: var(--text-strong); font-size: var(--fs-md); font-weight: 600; align-self: center; }
+
+  .cart__actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding: 14px 22px 18px;
+    border-top: 1px solid var(--divider);
+  }
+  .cart__actions .btn--pay { grid-column: 1 / -1; }
+
+  /* 처방전 연동 배너 */
+  .rx-banner {
+    margin: 0 22px; padding: 10px 14px;
+    background: #DBEAFE; color: #1E40AF;
+    border-radius: 8px; font-size: var(--fs-sm);
+    display: flex; align-items: center; gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar__logo">💊</div>
+    <a class="sidebar__item sidebar__item--active"><span class="ic">🧾</span><span>판매</span></a>
+    <a class="sidebar__item" href="prescription.html"><span class="ic">📋</span><span>처방</span></a>
+    <a class="sidebar__item" href="inventory.html"><span class="ic">📦</span><span>재고</span></a>
+    <a class="sidebar__item" href="history.html"><span class="ic">📊</span><span>내역</span></a>
+    <a class="sidebar__item"><span class="ic">👥</span><span>고객</span></a>
+    <div class="sidebar__bottom">
+      <a class="sidebar__item"><span class="ic">⚙️</span><span>설정</span></a>
+    </div>
+  </aside>
+
+  <!-- ============ TOPBAR ============ -->
+  <header class="topbar">
+    <div class="topbar__title">판매</div>
+    <span class="chip">POS-001</span>
+    <div class="topbar__spacer"></div>
+
+    <div class="topbar__item">
+      <span>오늘 매출</span>
+      <strong class="num">1,248,500원</strong>
+    </div>
+    <div class="topbar__item">
+      <span>판매 건수</span>
+      <strong class="num">37건</strong>
+    </div>
+
+    <span class="badge-sync">실시간 동기화 · 미전송 0</span>
+
+    <div class="topbar__item">
+      <span>2026-04-16</span>
+      <strong class="num">14:27</strong>
+    </div>
+
+    <div class="row gap-2">
+      <div class="avatar">김</div>
+      <div style="line-height:1.2;">
+        <div style="font-size:13px; font-weight:600;">김약사</div>
+        <div style="font-size:11px; color:var(--text-muted);">약사 · 근무중</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="sale-layout">
+
+      <!-- ---------- LEFT: 검색 + 상품 ---------- -->
+      <div class="sale-left">
+
+        <!-- 검색 + 바코드 -->
+        <div class="quick-bar">
+          <div class="search">
+            <span class="ic">🔍</span>
+            <input type="text" placeholder="상품명·코드·바코드를 입력하세요">
+            <span class="kbd">F2</span>
+          </div>
+          <button class="btn btn--primary">
+            <span>📷</span> 바코드
+          </button>
+          <button class="btn">
+            <span>📋</span> 처방전
+          </button>
+        </div>
+
+        <!-- 카테고리 탭 -->
+        <div class="tabs cat-tabs">
+          <button class="tab tab--active">⭐ 자주쓰는</button>
+          <button class="tab">일반의약품</button>
+          <button class="tab">전문의약품</button>
+          <button class="tab">건강기능식품</button>
+          <button class="tab">의료용품</button>
+          <button class="tab">위생용품</button>
+          <button class="tab">영유아</button>
+          <button class="tab">기타</button>
+        </div>
+
+        <!-- 상품 그리드 -->
+        <div class="product-grid">
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">💊</div>
+            <div class="product__name">타이레놀 이알 서방정 650mg</div>
+            <div class="product__maker">한국얀센 · 24정</div>
+            <div class="product__footer">
+              <span class="product__price num">7,500원</span>
+              <span class="product__stock">재고 42</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">💊</div>
+            <div class="product__name">훼스탈 플러스정</div>
+            <div class="product__maker">한독 · 20정</div>
+            <div class="product__footer">
+              <span class="product__price num">5,800원</span>
+              <span class="product__stock">재고 31</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">💊</div>
+            <div class="product__name">판피린 티정</div>
+            <div class="product__maker">동아제약 · 12정</div>
+            <div class="product__footer">
+              <span class="product__price num">4,200원</span>
+              <span class="product__stock product__stock--low">재고 6 ⚠</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">🫧</div>
+            <div class="product__name">겔포스엠 현탁액</div>
+            <div class="product__maker">보령 · 10포</div>
+            <div class="product__footer">
+              <span class="product__price num">8,900원</span>
+              <span class="product__stock">재고 18</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-hc">건강</span>
+            <div class="product__icon">🧴</div>
+            <div class="product__name">센트룸 우먼 멀티비타민</div>
+            <div class="product__maker">한국화이자 · 100정</div>
+            <div class="product__footer">
+              <span class="product__price num">28,000원</span>
+              <span class="product__stock">재고 14</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">💊</div>
+            <div class="product__name">이지엔6 애니 연질캡슐</div>
+            <div class="product__maker">대웅제약 · 10캡슐</div>
+            <div class="product__footer">
+              <span class="product__price num">6,500원</span>
+              <span class="product__stock">재고 27</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">🩹</div>
+            <div class="product__name">대일밴드 경제형 (M)</div>
+            <div class="product__maker">대일화학 · 50매</div>
+            <div class="product__footer">
+              <span class="product__price num">3,500원</span>
+              <span class="product__stock">재고 52</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">🧪</div>
+            <div class="product__name">박카스에프 100ml</div>
+            <div class="product__maker">동아제약 · 10병</div>
+            <div class="product__footer">
+              <span class="product__price num">7,000원</span>
+              <span class="product__stock">재고 45</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">💊</div>
+            <div class="product__name">아로나민 골드</div>
+            <div class="product__maker">일동제약 · 100정</div>
+            <div class="product__footer">
+              <span class="product__price num">32,000원</span>
+              <span class="product__stock">재고 12</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">💊</div>
+            <div class="product__name">지르텍정 10mg</div>
+            <div class="product__maker">GSK · 10정</div>
+            <div class="product__footer">
+              <span class="product__price num">8,000원</span>
+              <span class="product__stock">재고 23</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">👁️</div>
+            <div class="product__name">시크리트 아이드롭</div>
+            <div class="product__maker">삼일제약 · 15ml</div>
+            <div class="product__footer">
+              <span class="product__price num">5,500원</span>
+              <span class="product__stock">재고 9</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">🩹</div>
+            <div class="product__name">제놀쿨 카타플라스마</div>
+            <div class="product__maker">유한양행 · 7매</div>
+            <div class="product__footer">
+              <span class="product__price num">9,800원</span>
+              <span class="product__stock">재고 15</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-hc">건강</span>
+            <div class="product__icon">🌿</div>
+            <div class="product__name">쌍화탕 골드 100ml</div>
+            <div class="product__maker">광동제약 · 10병</div>
+            <div class="product__footer">
+              <span class="product__price num">12,000원</span>
+              <span class="product__stock">재고 20</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">💊</div>
+            <div class="product__name">닥터베이비 영양제</div>
+            <div class="product__maker">광동 · 30포</div>
+            <div class="product__footer">
+              <span class="product__price num">18,000원</span>
+              <span class="product__stock">재고 8</span>
+            </div>
+          </div>
+
+          <div class="product">
+            <span class="product__type type-otc">일반</span>
+            <div class="product__icon">🧴</div>
+            <div class="product__name">마데카솔 연고 10g</div>
+            <div class="product__maker">동국제약 · 10g</div>
+            <div class="product__footer">
+              <span class="product__price num">3,800원</span>
+              <span class="product__stock">재고 34</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ---------- RIGHT: 장바구니 ---------- -->
+      <aside class="cart">
+        <div class="cart__header">
+          <div>
+            <div class="cart__title">판매 #20260416-037</div>
+            <div class="cart__meta">담당 김약사 · 시작 14:25</div>
+          </div>
+          <button class="cart__customer">
+            <span>👤</span> 고객 지정
+          </button>
+        </div>
+
+        <!-- 처방전 연동 배너 -->
+        <div class="rx-banner" style="margin-top:12px;">
+          <span>📋</span>
+          <div class="flex-1">처방전 #RX-241 연동됨 · 박환자(만 34세)</div>
+          <button class="btn btn--sm" style="background:#fff;">보기</button>
+        </div>
+
+        <!-- 라인 아이템 -->
+        <div class="cart__items">
+
+          <div class="line">
+            <div>
+              <div class="line__name">타이레놀 이알 서방정 650mg</div>
+              <div class="line__meta">24정 · 바코드 880****127</div>
+              <div class="line__qty">
+                <button>−</button>
+                <input value="2">
+                <button>+</button>
+              </div>
+            </div>
+            <div>
+              <div class="line__price num">15,000원</div>
+              <div class="line__unit num">@7,500원</div>
+              <button class="line__del" title="삭제">✕</button>
+            </div>
+          </div>
+
+          <div class="line">
+            <div>
+              <div class="line__name">훼스탈 플러스정</div>
+              <div class="line__meta">20정 · 처방전 품목</div>
+              <div class="line__qty">
+                <button>−</button>
+                <input value="1">
+                <button>+</button>
+              </div>
+            </div>
+            <div>
+              <div class="line__price num">5,800원</div>
+              <div class="line__unit num">@5,800원</div>
+              <button class="line__del" title="삭제">✕</button>
+            </div>
+          </div>
+
+          <div class="line">
+            <div>
+              <div class="line__name">센트룸 우먼 멀티비타민</div>
+              <div class="line__meta">100정 · 건강기능식품</div>
+              <div class="line__qty">
+                <button>−</button>
+                <input value="1">
+                <button>+</button>
+              </div>
+            </div>
+            <div>
+              <div class="line__price num">28,000원</div>
+              <div class="line__unit num">@28,000원</div>
+              <button class="line__del" title="삭제">✕</button>
+            </div>
+          </div>
+
+          <div class="line">
+            <div>
+              <div class="line__name">대일밴드 경제형 (M)</div>
+              <div class="line__meta">50매</div>
+              <div class="line__qty">
+                <button>−</button>
+                <input value="3">
+                <button>+</button>
+              </div>
+            </div>
+            <div>
+              <div class="line__price num">10,500원</div>
+              <div class="line__unit num">@3,500원</div>
+              <button class="line__del" title="삭제">✕</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 빠른 액션 -->
+        <div class="cart__quick">
+          <button class="btn btn--sm">💰 할인</button>
+          <button class="btn btn--sm">🎁 포인트</button>
+          <button class="btn btn--sm">⏸ 보류</button>
+          <button class="btn btn--sm">🗑 전체취소</button>
+        </div>
+
+        <!-- 합계 -->
+        <div class="cart__totals">
+          <div class="total-row"><span>소계 (7개 품목)</span><span class="num">59,300원</span></div>
+          <div class="total-row"><span>할인</span><span class="num" style="color:var(--color-danger);">−2,000원</span></div>
+          <div class="total-row"><span>부가세 포함</span><span class="num text-muted">5,209원</span></div>
+          <div class="total-row grand"><span>결제 금액</span><span class="num">57,300원</span></div>
+        </div>
+
+        <!-- 결제 버튼 -->
+        <div class="cart__actions">
+          <button class="btn btn--lg">보류</button>
+          <button class="btn btn--lg">처방 추가</button>
+          <a href="payment.html" class="btn btn--primary btn--xl cart__actions__pay" style="grid-column:1/-1;">
+            💳 결제하기 · 57,300원
+          </a>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+</div>
+</body>
+</html>

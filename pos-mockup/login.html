@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>로그인 · 약국 POS</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .login-wrap {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--bg);
+  }
+
+  .login-brand {
+    background: linear-gradient(135deg, #2E7D66 0%, #1F5A4A 100%);
+    color: #fff;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 64px 72px;
+  }
+  .login-brand__logo {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .login-brand__logo .ic {
+    width: 64px; height: 64px; border-radius: 16px;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+  .login-brand__logo .name { font-size: 22px; font-weight: 800; }
+  .login-brand__logo .sub  { font-size: 14px; opacity: .8; }
+
+  .login-brand__hero h1 { font-size: 52px; font-weight: 800; margin: 0 0 20px; line-height: 1.2; }
+  .login-brand__hero p  { font-size: 18px; opacity: .88; line-height: 1.7; margin: 0; max-width: 480px; }
+
+  .login-brand__stats { display: flex; gap: 32px; }
+  .login-brand__stat  {
+    padding: 16px 20px; border-radius: 12px; background: rgba(255,255,255,.08);
+    min-width: 140px;
+  }
+  .login-brand__stat .v { font-size: 24px; font-weight: 700; }
+  .login-brand__stat .l { font-size: 13px; opacity: .8; margin-top: 4px; }
+
+  .login-panel {
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px;
+  }
+  .login-card {
+    width: 100%; max-width: 480px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 48px 44px;
+    box-shadow: var(--shadow-lg);
+  }
+  .login-card h2 { margin: 0 0 6px; font-size: 28px; font-weight: 800; color: var(--text-strong); }
+  .login-card .sub { margin: 0 0 32px; color: var(--text-muted); font-size: 15px; }
+
+  .pin-display {
+    display: flex; gap: 12px; justify-content: center; margin: 28px 0 24px;
+  }
+  .pin-dot {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--surface-alt);
+    border: 2px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: var(--text-strong);
+  }
+  .pin-dot.filled { background: var(--color-primary-light); border-color: var(--color-primary); }
+
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .key {
+    height: 68px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 24px; font-weight: 600;
+    color: var(--text-strong);
+  }
+  .key:hover { background: var(--surface-hover); }
+  .key--action { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+  .key--ghost  { background: transparent; color: var(--text-muted); }
+
+  .staff-row {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    padding: 16px; background: var(--surface-alt); border-radius: var(--radius);
+    margin-bottom: 24px;
+  }
+  .staff {
+    flex: 1; min-width: 120px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px; border-radius: 10px;
+    background: var(--surface);
+    border: 2px solid transparent;
+    transition: all .12s ease;
+  }
+  .staff.selected { border-color: var(--color-primary); background: var(--color-primary-light); }
+  .staff .avatar { width: 48px; height: 48px; margin-bottom: 8px; }
+  .staff .name { font-weight: 600; font-size: 14px; }
+  .staff .role { font-size: 12px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+
+  <!-- 좌측 브랜드 영역 -->
+  <div class="login-brand">
+    <div class="login-brand__logo">
+      <div class="ic">💊</div>
+      <div>
+        <div class="name">새벽약국 POS</div>
+        <div class="sub">Pharmacy Point of Sale</div>
+      </div>
+    </div>
+
+    <div class="login-brand__hero">
+      <h1>오프라인에서도<br>끊김없이</h1>
+      <p>로컬에 먼저 저장하고, 네트워크가 돌아오면 자동으로 동기화합니다. 판매가 중단되지 않도록 설계했습니다.</p>
+    </div>
+
+    <div class="login-brand__stats">
+      <div class="login-brand__stat"><div class="v">v1.0.3</div><div class="l">앱 버전</div></div>
+      <div class="login-brand__stat"><div class="v">온라인</div><div class="l">동기화 상태</div></div>
+      <div class="login-brand__stat"><div class="v">0건</div><div class="l">미전송</div></div>
+    </div>
+  </div>
+
+  <!-- 우측 로그인 패널 -->
+  <div class="login-panel">
+    <div class="login-card">
+      <h2>근무자 로그인</h2>
+      <p class="sub">PIN 4자리를 입력하세요</p>
+
+      <!-- 근무자 선택 -->
+      <div class="staff-row">
+        <button class="staff selected">
+          <div class="avatar">김</div>
+          <div class="name">김약사</div>
+          <div class="role">약사</div>
+        </button>
+        <button class="staff">
+          <div class="avatar" style="background:#2563EB">박</div>
+          <div class="name">박직원</div>
+          <div class="role">판매직원</div>
+        </button>
+        <button class="staff">
+          <div class="avatar" style="background:#F59E0B">이</div>
+          <div class="name">이직원</div>
+          <div class="role">판매직원</div>
+        </button>
+      </div>
+
+      <!-- PIN 입력 -->
+      <div class="pin-display">
+        <div class="pin-dot filled">●</div>
+        <div class="pin-dot filled">●</div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+
+      <!-- 키패드 -->
+      <div class="keypad">
+        <button class="key">1</button>
+        <button class="key">2</button>
+        <button class="key">3</button>
+        <button class="key">4</button>
+        <button class="key">5</button>
+        <button class="key">6</button>
+        <button class="key">7</button>
+        <button class="key">8</button>
+        <button class="key">9</button>
+        <button class="key key--ghost">← 지움</button>
+        <button class="key">0</button>
+        <button class="key key--action">확인</button>
+      </div>
+
+      <div class="divider mt-6"></div>
+      <div class="row between mt-4" style="font-size:13px;">
+        <a href="#" style="color:var(--color-primary); font-weight:600;">PIN 재설정</a>
+        <span class="text-muted">단말기 ID: POS-001</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

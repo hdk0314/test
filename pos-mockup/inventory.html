@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>재고 관리 · 약국 POS</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .inv-layout { display: flex; flex-direction: column; gap: var(--s-4); height: calc(100vh - var(--topbar-h) - 48px); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 22px;
+    position: relative; overflow: hidden;
+  }
+  .kpi .label { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+  .kpi .value { font-size: 28px; font-weight: 800; color: var(--text-strong); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .kpi .ic {
+    position: absolute; right: 20px; top: 20px;
+    font-size: 28px; opacity: .25;
+  }
+  .kpi--danger  { border-left: 4px solid var(--color-danger); }
+  .kpi--danger .value { color: var(--color-danger); }
+  .kpi--warning { border-left: 4px solid var(--color-warning); }
+  .kpi--warning .value { color: var(--color-warning); }
+
+  .inv-toolbar {
+    display: flex; gap: 12px; align-items: center;
+  }
+  .inv-toolbar .search { flex: 1; }
+
+  .inv-table-wrap {
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .inv-table-wrap__head {
+    padding: 16px 22px; border-bottom: 1px solid var(--divider);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .inv-scroll { flex: 1; overflow-y: auto; }
+
+  .status-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+  }
+  .status-ok { background: var(--color-success); }
+  .status-low { background: var(--color-warning); }
+  .status-out { background: var(--color-danger); }
+
+  .expiry-bar {
+    display: inline-block; width: 120px; height: 8px;
+    background: var(--surface-alt); border-radius: 999px; overflow: hidden;
+    vertical-align: middle; margin-right: 8px;
+  }
+  .expiry-bar > i { display: block; height: 100%; background: var(--color-success); }
+  .expiry-bar.warn > i { background: var(--color-warning); }
+  .expiry-bar.danger > i { background: var(--color-danger); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar__logo">💊</div>
+    <a class="sidebar__item" href="sale.html"><span class="ic">🧾</span><span>판매</span></a>
+    <a class="sidebar__item" href="prescription.html"><span class="ic">📋</span><span>처방</span></a>
+    <a class="sidebar__item sidebar__item--active"><span class="ic">📦</span><span>재고</span></a>
+    <a class="sidebar__item" href="history.html"><span class="ic">📊</span><span>내역</span></a>
+    <a class="sidebar__item"><span class="ic">👥</span><span>고객</span></a>
+    <div class="sidebar__bottom"><a class="sidebar__item"><span class="ic">⚙️</span><span>설정</span></a></div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar__title">재고 관리</div>
+    <div class="topbar__spacer"></div>
+    <span class="badge-sync">실시간 동기화</span>
+    <div class="topbar__item"><span>2026-04-16</span> <strong class="num">14:42</strong></div>
+    <div class="avatar">김</div>
+  </header>
+
+  <main class="main">
+    <div class="inv-layout">
+
+      <!-- KPI -->
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">총 품목 수</div>
+          <div class="value">2,487</div>
+          <div class="sub">활성 2,362 · 비활성 125</div>
+          <span class="ic">📦</span>
+        </div>
+        <div class="kpi kpi--warning">
+          <div class="label">재고 부족</div>
+          <div class="value">24</div>
+          <div class="sub">최소 재고 이하 품목</div>
+          <span class="ic">⚠️</span>
+        </div>
+        <div class="kpi kpi--danger">
+          <div class="value">7</div>
+          <div class="label">품절</div>
+          <div class="sub">즉시 발주 필요</div>
+          <span class="ic">🚨</span>
+        </div>
+        <div class="kpi kpi--warning">
+          <div class="label">유효기간 임박</div>
+          <div class="value">18</div>
+          <div class="sub">90일 이내 만료</div>
+          <span class="ic">⏰</span>
+        </div>
+        <div class="kpi">
+          <div class="label">재고 평가액</div>
+          <div class="value">84,250,000</div>
+          <div class="sub">원 · 매입가 기준</div>
+          <span class="ic">💰</span>
+        </div>
+      </div>
+
+      <!-- 툴바 -->
+      <div class="inv-toolbar">
+        <div class="search">
+          <span class="ic">🔍</span>
+          <input placeholder="품목명·코드·제조사·성분명 검색">
+          <span class="kbd">F2</span>
+        </div>
+
+        <div class="tabs">
+          <button class="tab tab--active">전체</button>
+          <button class="tab">일반의약품</button>
+          <button class="tab">전문의약품</button>
+          <button class="tab">건강기능식품</button>
+          <button class="tab">의료용품</button>
+        </div>
+
+        <button class="btn">📊 발주서</button>
+        <button class="btn">📥 입고</button>
+        <button class="btn btn--primary">+ 품목 추가</button>
+      </div>
+
+      <!-- 재고 테이블 -->
+      <div class="inv-table-wrap">
+        <div class="inv-table-wrap__head">
+          <div class="card__title">품목 목록</div>
+          <span class="chip">2,487건</span>
+          <div class="flex-1"></div>
+          <button class="btn btn--sm">🔎 필터</button>
+          <button class="btn btn--sm">📄 엑셀</button>
+        </div>
+        <div class="inv-scroll">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:40px;"><input type="checkbox"></th>
+                <th>품목명</th>
+                <th>분류</th>
+                <th>제조사</th>
+                <th>바코드</th>
+                <th class="text-right">매입가</th>
+                <th class="text-right">판매가</th>
+                <th class="text-right">재고</th>
+                <th>상태</th>
+                <th>유효기간</th>
+                <th style="width:120px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">타이레놀 이알 서방정 650mg</td>
+                <td><span class="chip">일반</span></td>
+                <td>한국얀센</td>
+                <td class="num">8801164127</td>
+                <td class="num">5,800원</td>
+                <td class="num">7,500원</td>
+                <td class="num strong">42</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:80%"></i></span>2027-08</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">훼스탈 플러스정</td>
+                <td><span class="chip">일반</span></td>
+                <td>한독</td>
+                <td class="num">8801135652</td>
+                <td class="num">4,200원</td>
+                <td class="num">5,800원</td>
+                <td class="num strong">31</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:65%"></i></span>2026-12</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">판피린 티정</td>
+                <td><span class="chip">일반</span></td>
+                <td>동아제약</td>
+                <td class="num">8801056033</td>
+                <td class="num">3,100원</td>
+                <td class="num">4,200원</td>
+                <td class="num strong" style="color:var(--color-warning);">6</td>
+                <td><span class="status-dot status-low"></span>부족</td>
+                <td><span class="expiry-bar warn"><i style="width:35%"></i></span>2026-08</td>
+                <td><button class="btn btn--sm btn--accent">발주</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">아모잘탄정 5/50mg</td>
+                <td><span class="chip" style="background:#DBEAFE;color:#1E40AF;">전문</span></td>
+                <td>한미약품</td>
+                <td class="num">8806640025</td>
+                <td class="num">480원</td>
+                <td class="num">600원</td>
+                <td class="num strong">128</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:90%"></i></span>2028-02</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">크레스토정 10mg</td>
+                <td><span class="chip" style="background:#DBEAFE;color:#1E40AF;">전문</span></td>
+                <td>한국아스트라제네카</td>
+                <td class="num">8806645823</td>
+                <td class="num">740원</td>
+                <td class="num">940원</td>
+                <td class="num strong">84</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:85%"></i></span>2027-11</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">센트룸 우먼 멀티비타민</td>
+                <td><span class="chip chip--warn">건강</span></td>
+                <td>한국화이자</td>
+                <td class="num">3016540000</td>
+                <td class="num">18,500원</td>
+                <td class="num">28,000원</td>
+                <td class="num strong">14</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:70%"></i></span>2027-03</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">겔포스엠 현탁액</td>
+                <td><span class="chip">일반</span></td>
+                <td>보령</td>
+                <td class="num">8801020111</td>
+                <td class="num">6,200원</td>
+                <td class="num">8,900원</td>
+                <td class="num strong">18</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar warn"><i style="width:25%"></i></span>2026-06 ⚠</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">아로나민 골드</td>
+                <td><span class="chip">일반</span></td>
+                <td>일동제약</td>
+                <td class="num">8801142700</td>
+                <td class="num">22,000원</td>
+                <td class="num">32,000원</td>
+                <td class="num strong">12</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:78%"></i></span>2027-09</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr style="background:#FEF2F2;">
+                <td><input type="checkbox"></td>
+                <td class="strong">박카스에프 100ml</td>
+                <td><span class="chip">일반</span></td>
+                <td>동아제약</td>
+                <td class="num">8801056014</td>
+                <td class="num">520원</td>
+                <td class="num">700원</td>
+                <td class="num strong" style="color:var(--color-danger);">0</td>
+                <td><span class="status-dot status-out"></span>품절</td>
+                <td><span class="text-muted">—</span></td>
+                <td><button class="btn btn--sm btn--accent">발주</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">이지엔6 애니 연질캡슐</td>
+                <td><span class="chip">일반</span></td>
+                <td>대웅제약</td>
+                <td class="num">8801388217</td>
+                <td class="num">4,800원</td>
+                <td class="num">6,500원</td>
+                <td class="num strong">27</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:60%"></i></span>2026-11</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">마데카솔 연고 10g</td>
+                <td><span class="chip">일반</span></td>
+                <td>동국제약</td>
+                <td class="num">8801009455</td>
+                <td class="num">2,600원</td>
+                <td class="num">3,800원</td>
+                <td class="num strong">34</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:82%"></i></span>2027-07</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="strong">지르텍정 10mg</td>
+                <td><span class="chip">일반</span></td>
+                <td>GSK</td>
+                <td class="num">8806420310</td>
+                <td class="num">5,600원</td>
+                <td class="num">8,000원</td>
+                <td class="num strong">23</td>
+                <td><span class="status-dot status-ok"></span>정상</td>
+                <td><span class="expiry-bar"><i style="width:72%"></i></span>2027-04</td>
+                <td><button class="btn btn--sm">관리</button></td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</body>
+</html>

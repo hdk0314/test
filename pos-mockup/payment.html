@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>결제 · 약국 POS</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .pay-layout {
+    display: grid;
+    grid-template-columns: 1fr 620px;
+    gap: var(--s-5);
+    height: calc(100vh - var(--topbar-h) - 48px);
+  }
+
+  .pay-left  { display: flex; flex-direction: column; gap: var(--s-4); }
+
+  /* 금액 패널 */
+  .amount-panel {
+    background: linear-gradient(135deg, #2E7D66 0%, #1F5A4A 100%);
+    border-radius: var(--radius-lg);
+    padding: 36px 40px;
+    color: #fff;
+  }
+  .amount-panel .label { color: rgba(255,255,255,.8); font-size: 14px; }
+  .amount-panel .value { font-size: 64px; font-weight: 800; letter-spacing: -1px; margin-top: 6px; }
+  .amount-panel .sub   { font-size: 14px; opacity: .85; margin-top: 6px; }
+  .amount-summary {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,.2);
+  }
+  .amount-summary .item .l { font-size: 12px; opacity: .75; }
+  .amount-summary .item .v { font-size: 18px; font-weight: 700; margin-top: 4px; }
+
+  /* 결제 수단 탭 */
+  .pay-methods {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .pay-method {
+    background: var(--surface);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  .pay-method:hover { border-color: var(--color-primary); }
+  .pay-method.active { border-color: var(--color-primary); background: var(--color-primary-light); }
+  .pay-method .ic { font-size: 36px; }
+  .pay-method .name { font-weight: 700; font-size: 15px; color: var(--text-strong); }
+  .pay-method .desc { font-size: 12px; color: var(--text-muted); }
+
+  /* 숫자 키패드 */
+  .num-keypad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .num-key {
+    min-height: 84px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-size: 28px; font-weight: 700;
+    color: var(--text-strong);
+  }
+  .num-key:hover { background: var(--surface-hover); }
+  .num-key.preset { background: var(--color-primary-light); color: var(--color-primary-dark); font-size: 18px; border-color: var(--color-primary-light); }
+  .num-key.clear  { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+
+  /* 우측 요약 */
+  .pay-right {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .pay-right__header {
+    padding: 18px 22px;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--divider);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .pay-right__items {
+    flex: 1; overflow-y: auto; padding: 8px 0;
+  }
+  .pay-right__item {
+    display: grid; grid-template-columns: 1fr auto auto;
+    padding: 10px 22px; gap: 16px; align-items: center;
+    font-size: 14px;
+  }
+  .pay-right__item:hover { background: var(--surface-alt); }
+  .pay-right__item .q { color: var(--text-muted); min-width: 36px; text-align: center; }
+  .pay-right__item .p { font-weight: 700; min-width: 80px; text-align: right; }
+
+  .pay-right__input {
+    padding: 18px 22px; border-top: 1px solid var(--divider);
+  }
+  .pay-right__total {
+    padding: 18px 22px; border-top: 1px solid var(--divider);
+    background: var(--surface-alt);
+  }
+  .pay-right__actions {
+    padding: 16px 22px 22px;
+    border-top: 1px solid var(--divider);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .input-received {
+    width: 100%;
+    height: 68px;
+    background: var(--surface-alt);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius);
+    text-align: right;
+    padding: 0 20px;
+    font-size: 32px; font-weight: 800;
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+  }
+  .input-received:focus { border-color: var(--color-primary); outline: none; }
+
+  .change-box {
+    margin-top: 12px;
+    padding: 14px 18px;
+    background: #DBEAFE; color: #1E40AF;
+    border-radius: var(--radius);
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 700;
+  }
+  .change-box .v { font-size: 24px; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar__logo">💊</div>
+    <a class="sidebar__item sidebar__item--active" href="sale.html"><span class="ic">🧾</span><span>판매</span></a>
+    <a class="sidebar__item" href="prescription.html"><span class="ic">📋</span><span>처방</span></a>
+    <a class="sidebar__item" href="inventory.html"><span class="ic">📦</span><span>재고</span></a>
+    <a class="sidebar__item" href="history.html"><span class="ic">📊</span><span>내역</span></a>
+    <a class="sidebar__item"><span class="ic">👥</span><span>고객</span></a>
+    <div class="sidebar__bottom">
+      <a class="sidebar__item"><span class="ic">⚙️</span><span>설정</span></a>
+    </div>
+  </aside>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <a href="sale.html" class="btn btn--ghost" style="padding: 0 12px; min-height: 44px;">← 판매로</a>
+    <div class="topbar__title">결제</div>
+    <span class="chip">판매 #20260416-037</span>
+    <div class="topbar__spacer"></div>
+    <span class="badge-sync">실시간 동기화</span>
+    <div class="topbar__item"><span>2026-04-16</span> <strong class="num">14:31</strong></div>
+    <div class="avatar">김</div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="pay-layout">
+
+      <!-- 좌측: 결제 수단 + 키패드 -->
+      <div class="pay-left">
+
+        <div class="amount-panel">
+          <div class="label">결제 금액</div>
+          <div class="value num">57,300<span style="font-size:28px; font-weight:600;"> 원</span></div>
+          <div class="sub">7개 품목 · 처방전 연동 판매</div>
+
+          <div class="amount-summary">
+            <div class="item"><div class="l">소계</div><div class="v num">59,300원</div></div>
+            <div class="item"><div class="l">할인</div><div class="v num">−2,000원</div></div>
+            <div class="item"><div class="l">부가세</div><div class="v num">5,209원</div></div>
+          </div>
+        </div>
+
+        <!-- 결제수단 -->
+        <div class="pay-methods">
+          <div class="pay-method"><span class="ic">💵</span><span class="name">현금</span><span class="desc">Cash</span></div>
+          <div class="pay-method active"><span class="ic">💳</span><span class="name">신용카드</span><span class="desc">Card</span></div>
+          <div class="pay-method"><span class="ic">📱</span><span class="name">간편결제</span><span class="desc">Pay</span></div>
+          <div class="pay-method"><span class="ic">🏥</span><span class="name">보험청구</span><span class="desc">Insurance</span></div>
+        </div>
+
+        <!-- 받은 금액 (현금일 때) · 키패드 -->
+        <div class="card" style="padding: 20px 24px;">
+          <div class="row between mb-4">
+            <div class="label" style="margin:0; font-size: 15px; font-weight: 600; color: var(--text-strong);">받은 금액 / 결제 금액 입력</div>
+            <div class="row gap-2">
+              <label class="row gap-2" style="font-size:13px;">
+                <input type="checkbox" checked> 현금영수증 발행
+              </label>
+              <input class="input" placeholder="전화번호 (010-0000-0000)" style="width:220px;">
+            </div>
+          </div>
+
+          <div class="num-keypad">
+            <button class="num-key preset">+1,000</button>
+            <button class="num-key preset">+5,000</button>
+            <button class="num-key preset">+10,000</button>
+            <button class="num-key preset">+50,000</button>
+
+            <button class="num-key">1</button>
+            <button class="num-key">2</button>
+            <button class="num-key">3</button>
+            <button class="num-key preset">정확금액</button>
+
+            <button class="num-key">4</button>
+            <button class="num-key">5</button>
+            <button class="num-key">6</button>
+            <button class="num-key preset">00</button>
+
+            <button class="num-key">7</button>
+            <button class="num-key">8</button>
+            <button class="num-key">9</button>
+            <button class="num-key clear">지움</button>
+
+            <button class="num-key" style="grid-column: span 2;">0</button>
+            <button class="num-key">.</button>
+            <button class="num-key clear">← 백</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 우측: 결제 요약 -->
+      <aside class="pay-right">
+        <div class="pay-right__header">
+          <div class="card__title">결제 내역</div>
+          <span class="chip">7개 품목</span>
+        </div>
+
+        <div class="pay-right__items">
+          <div class="pay-right__item"><span>타이레놀 이알 서방정 650mg</span><span class="q num">×2</span><span class="p num">15,000원</span></div>
+          <div class="pay-right__item"><span>훼스탈 플러스정</span><span class="q num">×1</span><span class="p num">5,800원</span></div>
+          <div class="pay-right__item"><span>센트룸 우먼 멀티비타민</span><span class="q num">×1</span><span class="p num">28,000원</span></div>
+          <div class="pay-right__item"><span>대일밴드 경제형 (M)</span><span class="q num">×3</span><span class="p num">10,500원</span></div>
+        </div>
+
+        <div class="pay-right__input">
+          <div class="label">받은 금액</div>
+          <input class="input-received" value="60,000" readonly>
+          <div class="change-box">
+            <span>거스름돈</span>
+            <span class="v num">2,700원</span>
+          </div>
+        </div>
+
+        <div class="pay-right__total">
+          <div class="total-row"><span>합계</span><span class="num">57,300원</span></div>
+          <div class="total-row"><span>결제수단</span><span class="text-strong">신용카드 (일시불)</span></div>
+          <div class="total-row"><span>영수증</span><span class="text-strong">인쇄 + 문자</span></div>
+        </div>
+
+        <div class="pay-right__actions">
+          <button class="btn btn--lg">취소</button>
+          <button class="btn btn--primary btn--xl">✔ 결제 완료 (Enter)</button>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+</div>
+</body>
+</html>

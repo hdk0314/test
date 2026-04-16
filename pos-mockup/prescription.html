@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>처방전 입력 · 약국 POS</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .rx-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr 420px;
+    gap: var(--s-5);
+    height: calc(100vh - var(--topbar-h) - 48px);
+  }
+
+  /* 좌측 환자 정보 */
+  .rx-patient .card__body { padding: 22px; }
+  .field { margin-bottom: 14px; }
+
+  .scan-drop {
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    background: var(--surface-alt);
+    margin-bottom: 16px;
+  }
+  .scan-drop .ic { font-size: 36px; }
+  .scan-drop .t  { font-weight: 700; margin-top: 8px; color: var(--text-strong); }
+  .scan-drop .s  { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* 중앙 처방 품목 */
+  .rx-main { display: flex; flex-direction: column; gap: var(--s-4); }
+  .rx-header { display: flex; gap: 12px; align-items: center; }
+  .rx-meta {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    padding: 16px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .rx-meta .k { font-size: 12px; color: var(--text-muted); }
+  .rx-meta .v { font-weight: 700; color: var(--text-strong); margin-top: 2px; font-size: 15px; }
+
+  .rx-items { flex: 1; overflow: hidden; }
+  .rx-items .card__body { padding: 0; height: 100%; overflow-y: auto; }
+
+  .rx-item {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--divider);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+  .rx-item__body {
+    display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px;
+    align-items: center;
+  }
+  .rx-item__name {
+    font-size: 16px; font-weight: 700; color: var(--text-strong);
+  }
+  .rx-item__detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .rx-item__dose {
+    text-align: center; font-size: 13px;
+  }
+  .rx-item__dose .v { font-size: 18px; font-weight: 700; color: var(--text-strong); }
+  .rx-item__dose .l { color: var(--text-muted); font-size: 11px; }
+
+  /* 우측 복약지도 */
+  .advice .card__body { padding: 22px; }
+  .advice-title { font-size: 15px; font-weight: 700; color: var(--text-strong); margin-bottom: 10px; }
+  .advice-list {
+    margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--text);
+  }
+  .advice-list li { margin-bottom: 6px; }
+
+  .warning-box {
+    background: #FEF3C7; color: #92400E;
+    padding: 14px 16px; border-radius: var(--radius);
+    font-size: 13px; line-height: 1.6;
+    border-left: 4px solid #F59E0B;
+    margin-top: 16px;
+  }
+  .warning-box .t { font-weight: 700; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar__logo">💊</div>
+    <a class="sidebar__item" href="sale.html"><span class="ic">🧾</span><span>판매</span></a>
+    <a class="sidebar__item sidebar__item--active"><span class="ic">📋</span><span>처방</span></a>
+    <a class="sidebar__item" href="inventory.html"><span class="ic">📦</span><span>재고</span></a>
+    <a class="sidebar__item" href="history.html"><span class="ic">📊</span><span>내역</span></a>
+    <a class="sidebar__item"><span class="ic">👥</span><span>고객</span></a>
+    <div class="sidebar__bottom"><a class="sidebar__item"><span class="ic">⚙️</span><span>설정</span></a></div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar__title">처방전 입력</div>
+    <span class="chip">RX-241</span>
+    <div class="topbar__spacer"></div>
+    <span class="badge-sync">실시간 동기화</span>
+    <div class="topbar__item"><span>2026-04-16</span> <strong class="num">14:18</strong></div>
+    <div class="avatar">김</div>
+  </header>
+
+  <main class="main">
+    <div class="rx-layout">
+
+      <!-- 좌측: 환자 및 처방 정보 -->
+      <section class="card rx-patient">
+        <div class="card__header"><div class="card__title">환자 / 처방 정보</div></div>
+        <div class="card__body">
+
+          <div class="scan-drop">
+            <div class="ic">📷</div>
+            <div class="t">처방전 QR/바코드 스캔</div>
+            <div class="s">또는 수동 입력하세요</div>
+          </div>
+
+          <div class="field">
+            <label class="label">환자명</label>
+            <input class="input" value="박환자">
+          </div>
+          <div class="row gap-2">
+            <div class="field flex-1">
+              <label class="label">주민번호</label>
+              <input class="input" value="900301-1******">
+            </div>
+            <div class="field" style="width:110px;">
+              <label class="label">나이</label>
+              <input class="input" value="34">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">전화번호</label>
+            <input class="input" value="010-1234-5678">
+          </div>
+          <div class="field">
+            <label class="label">처방 의료기관</label>
+            <input class="input" value="서울내과의원">
+          </div>
+          <div class="row gap-2">
+            <div class="field flex-1">
+              <label class="label">처방일자</label>
+              <input class="input" value="2026-04-16">
+            </div>
+            <div class="field" style="width:130px;">
+              <label class="label">조제기간</label>
+              <input class="input" value="7일">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">보험 유형</label>
+            <select class="select">
+              <option>건강보험 (20%)</option>
+              <option>의료급여 1종</option>
+              <option>의료급여 2종</option>
+              <option>자동차보험</option>
+              <option>일반 (100%)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- 중앙: 처방 품목 -->
+      <section class="rx-main">
+
+        <div class="rx-header">
+          <div class="search flex-1">
+            <span class="ic">🔍</span>
+            <input placeholder="약품코드·성분명 검색 (예: 타이레놀, 아세트아미노펜)">
+            <span class="kbd">F3</span>
+          </div>
+          <button class="btn btn--primary">+ 품목 추가</button>
+        </div>
+
+        <div class="rx-meta">
+          <div><div class="k">처방 상태</div><div class="v" style="color:var(--color-success);">● 접수됨</div></div>
+          <div><div class="k">처방 품목</div><div class="v num">3종</div></div>
+          <div><div class="k">조제 금액</div><div class="v num">12,480원</div></div>
+          <div><div class="k">본인부담금</div><div class="v num">2,496원</div></div>
+        </div>
+
+        <section class="card rx-items">
+          <div class="card__header">
+            <div class="card__title">처방 품목</div>
+            <span class="chip">3건</span>
+            <div class="flex-1"></div>
+            <button class="btn btn--sm">일괄 편집</button>
+          </div>
+          <div class="card__body">
+
+            <div class="rx-item">
+              <div class="rx-item__body">
+                <div>
+                  <div class="rx-item__name">아모잘탄정 5/50mg</div>
+                  <div class="rx-item__detail">한미약품 · 정제 · 640025</div>
+                  <span class="chip" style="margin-top:6px;">고혈압</span>
+                </div>
+                <div class="rx-item__dose">
+                  <div class="v">1정</div>
+                  <div class="l">1회 용량</div>
+                </div>
+                <div class="rx-item__dose">
+                  <div class="v">1회</div>
+                  <div class="l">1일 복용</div>
+                </div>
+                <div class="rx-item__dose">
+                  <div class="v">7일</div>
+                  <div class="l">투약일수</div>
+                </div>
+              </div>
+              <div class="col" style="align-items:flex-end;">
+                <div class="num" style="font-weight:700; font-size:16px;">4,200원</div>
+                <button class="btn btn--sm btn--ghost" style="color:var(--color-danger);">삭제</button>
+              </div>
+            </div>
+
+            <div class="rx-item">
+              <div class="rx-item__body">
+                <div>
+                  <div class="rx-item__name">크레스토정 10mg</div>
+                  <div class="rx-item__detail">한국아스트라제네카 · 정제 · 645823</div>
+                  <span class="chip" style="margin-top:6px;">이상지질혈증</span>
+                </div>
+                <div class="rx-item__dose"><div class="v">1정</div><div class="l">1회 용량</div></div>
+                <div class="rx-item__dose"><div class="v">1회</div><div class="l">1일 복용</div></div>
+                <div class="rx-item__dose"><div class="v">7일</div><div class="l">투약일수</div></div>
+              </div>
+              <div class="col" style="align-items:flex-end;">
+                <div class="num" style="font-weight:700; font-size:16px;">6,580원</div>
+                <button class="btn btn--sm btn--ghost" style="color:var(--color-danger);">삭제</button>
+              </div>
+            </div>
+
+            <div class="rx-item">
+              <div class="rx-item__body">
+                <div>
+                  <div class="rx-item__name">훼스탈 플러스정</div>
+                  <div class="rx-item__detail">한독 · 정제 · 652104</div>
+                  <span class="chip chip--muted" style="margin-top:6px;">소화제</span>
+                </div>
+                <div class="rx-item__dose"><div class="v">1정</div><div class="l">1회 용량</div></div>
+                <div class="rx-item__dose"><div class="v">3회</div><div class="l">1일 복용</div></div>
+                <div class="rx-item__dose"><div class="v">7일</div><div class="l">투약일수</div></div>
+              </div>
+              <div class="col" style="align-items:flex-end;">
+                <div class="num" style="font-weight:700; font-size:16px;">1,700원</div>
+                <button class="btn btn--sm btn--ghost" style="color:var(--color-danger);">삭제</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <div class="row gap-2">
+          <button class="btn flex-1 btn--lg">임시 저장</button>
+          <button class="btn btn--lg">📄 검사 제출</button>
+          <a href="sale.html" class="btn btn--primary btn--lg" style="flex:2;">판매 화면으로 전송 →</a>
+        </div>
+      </section>
+
+      <!-- 우측: 복약지도 -->
+      <aside class="card advice">
+        <div class="card__header"><div class="card__title">복약 지도</div><span class="chip">자동 생성</span></div>
+        <div class="card__body">
+
+          <div class="advice-title">📌 복용 안내</div>
+          <ul class="advice-list">
+            <li>아모잘탄정: 매일 같은 시간 아침 식후 30분</li>
+            <li>크레스토정: 하루 1회 저녁 식후</li>
+            <li>훼스탈 플러스정: 매 식후 30분 이내</li>
+          </ul>
+
+          <div class="advice-title mt-6">⚠️ 주의 사항</div>
+          <ul class="advice-list">
+            <li>자몽 주스와 함께 복용 금지</li>
+            <li>음주는 가급적 피하세요</li>
+            <li>어지러움·근육통 발생 시 즉시 상담</li>
+          </ul>
+
+          <div class="warning-box">
+            <div class="t">🔎 DUR 점검 결과</div>
+            동일 성분 중복 없음 · 상호작용 없음 · 연령·임부 금기 해당 없음
+          </div>
+
+          <div class="mt-6">
+            <label class="label">추가 안내 메모</label>
+            <textarea class="textarea" placeholder="환자에게 구두로 전달할 내용을 입력하세요..."></textarea>
+          </div>
+
+          <div class="mt-4 row gap-2">
+            <button class="btn flex-1">🖨 인쇄</button>
+            <button class="btn flex-1">📱 문자 전송</button>
+          </div>
+
+        </div>
+      </aside>
+
+    </div>
+  </main>
+</div>
+</body>
+</html>
