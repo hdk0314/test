@@ -1,0 +1,42 @@
+<UserControl x:Class="ErpShell.App.Views.AccountingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource Surface1Brush}">
+
+    <Grid Margin="32,28,32,32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource DisplayTextStyle}"/>
+                <TextBlock Text="{Binding Subtitle}" Style="{StaticResource SecondaryTextStyle}" Margin="0,6,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0" Content="원장 보기"/>
+                <Button Style="{StaticResource PrimaryButtonStyle}" Content="+ 전표 작성"/>
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="0">
+            <DataGrid Style="{StaticResource ModernDataGridStyle}"
+                      ItemsSource="{Binding Entries}"
+                      Margin="8">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="전표번호"  Binding="{Binding EntryNo}"     Width="120"/>
+                    <DataGridTextColumn Header="일자"      Binding="{Binding Date, StringFormat=yyyy.MM.dd}" Width="120"/>
+                    <DataGridTextColumn Header="계정"      Binding="{Binding Account}"     Width="160"/>
+                    <DataGridTextColumn Header="적요"      Binding="{Binding Description}" Width="*"/>
+                    <DataGridTextColumn Header="차변"      Binding="{Binding Debit,  StringFormat=₩ {0:N0}}" Width="160"/>
+                    <DataGridTextColumn Header="대변"      Binding="{Binding Credit, StringFormat=₩ {0:N0}}" Width="160"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

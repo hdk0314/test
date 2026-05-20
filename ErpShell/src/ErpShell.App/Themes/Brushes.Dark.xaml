@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Colors.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Surfaces -->
+    <SolidColorBrush x:Key="Surface0Brush"   Color="{StaticResource Surface0Dark}"/>
+    <SolidColorBrush x:Key="Surface1Brush"   Color="{StaticResource Surface1Dark}"/>
+    <SolidColorBrush x:Key="Surface2Brush"   Color="{StaticResource Surface2Dark}"/>
+    <SolidColorBrush x:Key="Surface3Brush"   Color="{StaticResource Surface3Dark}"/>
+    <SolidColorBrush x:Key="BorderBrush"     Color="{StaticResource BorderDark}"/>
+    <SolidColorBrush x:Key="DividerBrush"    Color="{StaticResource DividerDark}"/>
+
+    <!-- Text -->
+    <SolidColorBrush x:Key="TextPrimaryBrush"   Color="{StaticResource TextPrimaryDark}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryDark}"/>
+    <SolidColorBrush x:Key="TextTertiaryBrush"  Color="{StaticResource TextTertiaryDark}"/>
+    <SolidColorBrush x:Key="TextInverseBrush"   Color="{StaticResource TextInverseLight}"/>
+
+    <!-- Brand -->
+    <SolidColorBrush x:Key="BrandBrush"         Color="{StaticResource BrandPrimary}"/>
+    <SolidColorBrush x:Key="BrandHoverBrush"    Color="{StaticResource BrandPrimaryHover}"/>
+    <SolidColorBrush x:Key="BrandPressedBrush"  Color="{StaticResource BrandPrimaryPressed}"/>
+    <SolidColorBrush x:Key="BrandAccentBrush"   Color="{StaticResource BrandAccent}"/>
+
+    <!-- Sidebar gradient -->
+    <LinearGradientBrush x:Key="SidebarBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#0F172A"/>
+        <GradientStop Offset="1" Color="#0B1220"/>
+    </LinearGradientBrush>
+
+    <!-- Semantic -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource Success}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource Warning}"/>
+    <SolidColorBrush x:Key="DangerBrush"  Color="{StaticResource Danger}"/>
+    <SolidColorBrush x:Key="InfoBrush"    Color="{StaticResource Info}"/>
+
+</ResourceDictionary>
