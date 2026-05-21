@@ -1,0 +1,43 @@
+<UserControl x:Class="ErpShell.App.Views.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource Surface1Brush}">
+
+    <Grid Margin="32,28,32,32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource DisplayTextStyle}"/>
+                <TextBlock Text="{Binding Subtitle}" Style="{StaticResource SecondaryTextStyle}" Margin="0,6,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource GhostButtonStyle}" Margin="0,0,8,0" Content="실사 등록"/>
+                <Button Style="{StaticResource PrimaryButtonStyle}" Content="+ 품목 추가"/>
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="0">
+            <DataGrid Style="{StaticResource ModernDataGridStyle}"
+                      ItemsSource="{Binding Items}"
+                      Margin="8">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="SKU"        Binding="{Binding Sku}"      Width="120"/>
+                    <DataGridTextColumn Header="품목명"     Binding="{Binding Name}"     Width="*"/>
+                    <DataGridTextColumn Header="카테고리"   Binding="{Binding Category}" Width="140"/>
+                    <DataGridTextColumn Header="현재고"     Binding="{Binding OnHand}"   Width="100"/>
+                    <DataGridTextColumn Header="예약"       Binding="{Binding Reserved}" Width="100"/>
+                    <DataGridTextColumn Header="발주점"     Binding="{Binding Reorder}"  Width="100"/>
+                    <DataGridTextColumn Header="위치"       Binding="{Binding Location}" Width="160"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>
